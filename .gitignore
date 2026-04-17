@@ -3,11 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Data and Models (Keep repo lightweight)
+# Data (Keep repo lightweight)
 data/
-models/
 
 # Environments
+.env
 .venv/
 env/
 venv/

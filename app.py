@@ -2,10 +2,14 @@ from flask import Flask, request, jsonify, render_template
 import joblib
 import pandas as pd
 import os
+from dotenv import load_dotenv
 
 # --- STEP 3: DEPLOY THE WEB SERVICE ---
 # This script starts a local web server (API). 
 # It connects the Machine Learning 'Brain' to the Frontend dashboard.
+
+# Load environment variables from .env file (for local development)
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -24,6 +28,8 @@ def load_environment():
         model = joblib.load(MODEL_PATH)
         features = joblib.load(FEATURES_PATH)
         print("Intelligence successfully loaded from storage.")
+    else:
+        print(f"Warning: Model not found at {MODEL_PATH}")
 
 load_environment()
 
@@ -67,5 +73,7 @@ def predict():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    # Start the server on port 5000 (localhost)
-    app.run(debug=False, port=5000)
+    # Start the server. On Render, 'PORT' will be provided by the platform.
+    # Locally, it will default to 5000.
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
