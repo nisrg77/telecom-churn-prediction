@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChurnShield Pro | IBM Telco Analytics</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* --- DESIGN SYSTEM --- */
+        /* We use CSS variables to define our color palette. 
+           This makes it easy to change the theme in one place. */
+        :root {
+            --bg: #050505;
+            --surface: #0f0f0f;
+            --surface-elevated: #1a1a1a;
+            --border: #262626;
+            --accent: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.2);
+            --safe: #10b981;
+            --danger: #f43f5e;
+            --text: #ffffff;
+            --text-dim: #737373;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            /* Glassmorphism gradient effect */
+            background-image: radial-gradient(circle at top right, var(--accent-glow), transparent 40%);
+        }
+
+        /* --- LAYOUT --- */
+        header {
+            padding: 1.25rem 2.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(20px);
+            background: rgba(5, 5, 5, 0.8);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .logo {
+            font-weight: 700; font-size: 1.4rem; display: flex; align-items: center; gap: 8px;
+            background: linear-gradient(to bottom right, #fff, var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        main {
+            flex: 1; display: grid; grid-template-columns: 480px 1fr; gap: 2rem;
+            padding: 2rem; max-width: 1600px; margin: 0 auto; width: 100%;
+        }
+
+        /* We use a scrollable container for the form so it stays neat on small screens */
+        .scroll-container {
+            height: calc(100vh - 160px);
+            overflow-y: auto;
+            padding-right: 12px;
+        }
+
+        .scroll-container::-webkit-scrollbar { width: 4px; }
+        .scroll-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        /* --- FORM ELEMENTS --- */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
+        
+        h2 { font-size: 0.9rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+
+        .form-section { margin-bottom: 2rem; }
+        .section-title { font-size: 0.8rem; font-weight: 600; color: var(--accent); margin-bottom: 1rem; text-transform: uppercase; display: block; border-left: 2px solid var(--accent); padding-left: 10px; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .full-width { grid-column: span 2; }
+
+        .field { display: flex; flex-direction: column; gap: 0.4rem; }
+        label { font-size: 0.75rem; font-weight: 600; color: var(--text-dim); }
+        
+        #churnForm input, 
+        #churnForm select {
+            background: var(--surface-elevated); 
+            border: 1px solid var(--border); 
+            color: #fff;
+            padding: 0.8rem 1rem; 
+            border-radius: 10px; 
+            font-family: inherit; 
+            font-size: 0.95rem; 
+            outline: none; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            height: 48px;
+            /* appearance: none removes the browser's default styling so we can use our own */
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+        }
+
+        /* Custom Arrow for Select */
+        #churnForm select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 1rem center !important;
+            background-size: 1.1rem !important;
+            padding-right: 2.5rem !important;
+        }
+
+        /* IE/Edge hide arrow */
+        #churnForm select::-ms-expand {
+            display: none !important;
+        }
+
+        /* Remove Number Spinners (Final Nuclear Reset) */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none !important;
+            display: none !important;
+            margin: 0 !important;
+        }
+
+        #churnForm input[type=number] {
+            -moz-appearance: textfield !important;
+        }
+
+        #churnForm input:focus, 
+        #churnForm select:focus { 
+            border-color: var(--accent); 
+            box-shadow: 0 0 0 4px var(--accent-glow);
+            background-color: var(--surface);
+        }
+
+        .btn-predict {
+            background: var(--accent); color: #fff; border: none; padding: 1.1rem; border-radius: 8px;
+            font-weight: 700; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
+            transition: 0.3s; width: 100%; margin-top: 1rem;
+        }
+
+        .btn-predict:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--accent-glow); background: #9d7cff; }
+
+        /* Dashboard Styles */
+        .dashboard { display: flex; flex-direction: column; gap: 2rem; }
+        .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .metric-card { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; border-radius: 16px; }
+        .metric-label { font-size: 0.7rem; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
+        .metric-value { font-size: 2rem; font-weight: 700; margin-top: 0.5rem; font-family: 'JetBrains Mono', monospace; }
+
+        .ticker { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        .ticker-header { padding: 1rem 1.5rem; background: rgba(255,255,255,0.02); display: grid; grid-template-columns: 80px 1fr 120px 100px; font-size: 0.7rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        .ticker-list { flex: 1; overflow-y: auto; }
+        .ticker-item { padding: 1.25rem 1.5rem; display: grid; grid-template-columns: 80px 1fr 120px 100px; align-items: center; border-bottom: 1px solid var(--border); font-size: 0.85rem; animation: slideIn 0.4s ease-out; }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-align: center; }
+        .badge-safe { background: rgba(16, 185, 129, 0.1); color: var(--safe); }
+        .badge-danger { background: rgba(244, 63, 94, 0.1); color: var(--danger); }
+
+        .risk-gauge { height: 6px; background: #000; border-radius: 3px; overflow: hidden; margin-top: 5px; }
+        .risk-fill { height: 100%; transition: width 0.8s ease; }
+
+        .loader { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo"><i data-lucide="activity"></i> ChurnShield Pro</div>
+    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-dim); display: flex; align-items: center; gap: 8px;">
+        <span style="color: var(--safe)">●</span> SYSTEM READY: IBM TELCO v2.1
+    </div>
+</header>
+
+<main>
+    <div class="scroll-container">
+        <aside class="card">
+            <h2>Analyze Customer Profile</h2>
+            <form id="churnForm">
+                
+                <div class="form-section">
+                    <span class="section-title">Core Account</span>
+                    <div class="form-grid">
+                        <div class="field"><label>Tenure (Mos)</label><input type="text" inputmode="numeric" name="tenure" value="12" pattern="[0-9]*" required></div>
+                        <div class="field"><label>Contract</label><select name="Contract">
+                            <option value="Month-to-month">Month-to-month</option>
+                            <option value="One year">One year</option>
+                            <option value="Two year">Two year</option>
+                        </select></div>
+                        <div class="field"><label>Monthly ($)</label><input type="text" inputmode="decimal" name="MonthlyCharges" value="70.00" pattern="[0-9]*\.?[0-9]*" required></div>
+                        <div class="field"><label>Total ($)</label><input type="text" inputmode="decimal" name="TotalCharges" value="840.00" pattern="[0-9]*\.?[0-9]*" required></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-title">Personal Identity</span>
+                    <div class="form-grid">
+                        <div class="field"><label>Gender</label><select name="gender">
+                            <option value="Male">Male</option><option value="Female">Female</option>
+                        </select></div>
+                        <div class="field"><label>Senior Citizen</label><select name="SeniorCitizen">
+                            <option value="0">No</option><option value="1">Yes</option>
+                        </select></div>
+                        <div class="field"><label>Partner</label><select name="Partner">
+                            <option value="Yes">Yes</option><option value="No">No</option>
+                        </select></div>
+                        <div class="field"><label>Dependents</label><select name="Dependents">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-title">Service Stack</span>
+                    <div class="form-grid">
+                        <div class="field"><label>Phone Service</label><select name="PhoneService">
+                            <option value="Yes">Yes</option><option value="No">No</option>
+                        </select></div>
+                        <div class="field"><label>Multiple Lines</label><select name="MultipleLines">
+                            <option value="No">No</option><option value="Yes">Yes</option><option value="No phone service">N/A</option>
+                        </select></div>
+                        <div class="field full-width"><label>Internet Service</label><select name="InternetService">
+                            <option value="Fiber optic">Fiber optic</option><option value="DSL">DSL</option><option value="No">None</option>
+                        </select></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-title">Protection & Tech</span>
+                    <div class="form-grid">
+                        <div class="field"><label>Online Security</label><select name="OnlineSecurity">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select></div>
+                        <div class="field"><label>Online Backup</label><select name="OnlineBackup">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select></div>
+                        <div class="field"><label>Device Protection</label><select name="DeviceProtection">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select></div>
+                        <div class="field"><label>Tech Support</label><select name="TechSupport">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <span class="section-title">Streaming & Billing</span>
+                    <div class="form-grid">
+                        <div class="field"><label>Streaming TV</label><select name="StreamingTV">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select></div>
+                        <div class="field"><label>Streaming Movies</label><select name="StreamingMovies">
+                            <option value="No">No</option><option value="Yes">Yes</option>
+                        </select></div>
+                        <div class="field"><label>Paperless</label><select name="PaperlessBilling">
+                            <option value="Yes">Yes</option><option value="No">No</option>
+                        </select></div>
+                        <div class="field"><label>Payment Method</label><select name="PaymentMethod">
+                            <option value="Electronic check">Electronic check</option><option value="Mailed check">Mailed check</option><option value="Bank transfer (automatic)">Bank transfer</option><option value="Credit card (automatic)">Credit card</option>
+                        </select></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-predict" id="submitBtn">
+                    <span id="btnText">EXECUTE RISK AUDIT</span>
+                    <div class="loader" id="btnLoader"></div>
+                </button>
+            </form>
+        </aside>
+    </div>
+
+    <div class="dashboard">
+        <div class="metrics">
+            <div class="metric-card"><span class="metric-label">Audits</span><div class="metric-value" id="countTotal">0</div></div>
+            <div class="metric-card"><span class="metric-label">Stable</span><div class="metric-value" style="color: var(--safe)" id="countRetained">0</div></div>
+            <div class="metric-card"><span class="metric-label">At Risk</span><div class="metric-value" style="color: var(--danger)" id="countChurn">0</div></div>
+        </div>
+
+        <div class="ticker">
+            <div class="ticker-header"><span>CID</span><span>Service Profile</span><span>Prob.</span><span style="text-align: right">Status</span></div>
+            <div class="ticker-list" id="tickerList"></div>
+        </div>
+    </div>
+</main>
+
+<script>
+    lucide.createIcons();
+    let total = 0, retained = 0, churnCount = 0;
+
+    document.getElementById('churnForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn'), loader = document.getElementById('btnLoader'), text = document.getElementById('btnText');
+        btn.disabled = true; loader.style.display = 'block'; text.style.display = 'none';
+
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        // Handle numerical explicitly
+        data.SeniorCitizen = parseInt(data.SeniorCitizen);
+        data.tenure = parseInt(data.tenure);
+        data.MonthlyCharges = parseFloat(data.MonthlyCharges);
+        data.TotalCharges = parseFloat(data.TotalCharges);
+
+        try {
+            const resp = await fetch('/predict', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            const result = await resp.json();
+            
+            setTimeout(() => {
+                if(resp.ok) { addResult(data, result); updateMetrics(result.churn_prediction); }
+                else alert(result.error);
+                btn.disabled = false; loader.style.display = 'none'; text.style.display = 'block';
+            }, 600);
+        } catch (err) { alert("API Offline"); btn.disabled = false; loader.style.display = 'none'; text.style.display = 'block'; }
+    });
+
+    function updateMetrics(pred) {
+        total++; pred === 'Yes' ? churnCount++ : retained++;
+        document.getElementById('countTotal').innerText = total;
+        document.getElementById('countRetained').innerText = retained;
+        document.getElementById('countChurn').innerText = churnCount;
+    }
+
+    function addResult(input, res) {
+        const list = document.getElementById('tickerList');
+        const cid = 'TC-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+        const p = Math.round(res.churn_probability * 100);
+        const isC = res.churn_prediction === 'Yes';
+        const item = document.createElement('div');
+        item.className = 'ticker-item';
+        item.innerHTML = `
+            <span style="font-family: 'JetBrains Mono'; font-weight: 700;">${cid}</span>
+            <span style="color: var(--text-dim); font-size: 0.75rem;">${input.InternetService} / ${input.Contract}</span>
+            <div><span style="font-size: 0.7rem; font-weight: 700; color: ${isC ? 'var(--danger)' : 'var(--safe)'}">${p}% RISK</span><div class="risk-gauge"><div class="risk-fill" style="width: ${p}%; background: ${isC ? 'var(--danger)' : 'var(--safe)'}"></div></div></div>
+            <div style="text-align: right"><span class="badge ${isC ? 'badge-danger' : 'badge-safe'}">${res.churn_prediction}</span></div>
+        `;
+        list.insertBefore(item, list.firstChild);
+    }
+</script>
+</body>
+</html>
